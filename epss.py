@@ -1,33 +1,50 @@
 # %%
 import requests
 import datetime
+import json
 
 NUM_DAYS = 30
 EPSS_PERCENTILE = 0.6
 
 # get cves rated above the 80th percentile in the last 30 days
-epss_cves = requests.get(
-    "https://api.first.org/data/v1/epss",
-    {"order": "!epss", "days": NUM_DAYS, "percentile-gt": EPSS_PERCENTILE},
-).json()["data"]
+EPSS_PATH = ".cache/epss.json"
+try:
+    epss_cves = json.load(open(EPSS_PATH, "r"))
+    print("Got EPSS data from cache")  # TODO: check if from today
+except FileNotFoundError:
+    print("Requesting EPSS data...")
+    epss_cves = requests.get(
+        "https://api.first.org/data/v1/epss",
+        {"order": "!epss", "days": NUM_DAYS, "percentile-gt": EPSS_PERCENTILE},
+    ).json()["data"]
+    json.dump(epss_cves, open(EPSS_PATH, "w"))
+
 print(
     f"Found {len(epss_cves)} EPSS CVEs rated above the {int(EPSS_PERCENTILE*100)}th percentile in the last {NUM_DAYS} days"
 )
 
-nist_url = f"https://services.nvd.nist.gov/rest/json/cves/2.0/"
-today = datetime.date.today()
-start_date = today - datetime.timedelta(days=30)
-end_date = today
+NIST_PATH = ".cache/nist.json"
 
-format_date = lambda date: date.strftime("%Y-%m-%dT%H:%M:%S.%f")
-nist_data = requests.get(
-    nist_url,
-    params={
-        "pubStartDate": format_date(start_date),
-        "pubEndDate": format_date(end_date),
-    },
-).json()
-nist_cves = [cve["cve"] for cve in nist_data["vulnerabilities"]]
+try:
+    nist_cves = json.load(open(NIST_PATH, "r"))  # TODO: check if from today
+    print("Got NIST data from cache")
+except FileNotFoundError:
+    print("Requesting NIST data...")
+    nist_url = f"https://services.nvd.nist.gov/rest/json/cves/2.0/"
+    today = datetime.date.today()
+    start_date = today - datetime.timedelta(days=30)
+    end_date = today
+
+    format_date = lambda date: date.strftime("%Y-%m-%dT%H:%M:%S.%f")
+    nist_data = requests.get(
+        nist_url,
+        params={
+            "pubStartDate": format_date(start_date),
+            "pubEndDate": format_date(end_date),
+        },
+    ).json()
+    nist_cves = [cve["cve"] for cve in nist_data["vulnerabilities"]]
+    json.dump(nist_cves, open(NIST_PATH, "w"))
 
 print(f"Found {len(nist_cves)} NIST CVEs published in the last {NUM_DAYS} days")
 
