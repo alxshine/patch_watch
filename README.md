@@ -9,6 +9,5 @@ Features:
 - [x] Plot number of new CVEs per day
 - [x] Plot min/mean/median/max impact score over days
 - [x] Allow specifying desired output via command line parameters
-
-It should be a stateful application, because querying the databases can take a while.
-Probably TUI, with plotille plots?
+- [ ] Update cached data if from yesterday or older, allow force updating
+- [ ] Add setup script
