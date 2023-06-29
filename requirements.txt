@@ -2,3 +2,4 @@ plotille
 matplotlib
 seaborn
 scikit-learn
+termcolor
