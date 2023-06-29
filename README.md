@@ -11,4 +11,4 @@ Features:
 - [x] Allow specifying desired output via command line parameters
 - [x] Update cached data if from yesterday or older, allow force updating
 - [x] Add pagination (depending on terminal size?)
-- [ ] Add setup script
+- [x] Add setup script
