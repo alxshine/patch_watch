@@ -28,7 +28,7 @@ def get_cves(force_reload=False) -> tuple[list[dict], list[dict]]:
 
         epss_cves = json.load(open(EPSS_PATH, "r"))
 
-        print("Got EPSS data from cache")  # TODO: check if from today
+        print("Got EPSS data from cache")
     except FileNotFoundError:
         print("Requesting EPSS data...")
         epss_cves = requests.get(
@@ -48,7 +48,7 @@ def get_cves(force_reload=False) -> tuple[list[dict], list[dict]]:
         if nist_time < datetime.datetime.now().timestamp() - 86400 or force_reload:
             raise FileNotFoundError
 
-        nist_cves = json.load(open(NIST_PATH, "r"))  # TODO: check if from today
+        nist_cves = json.load(open(NIST_PATH, "r"))
         print("Got NIST data from cache")
     except FileNotFoundError:
         print("Requesting NIST data...")
@@ -116,24 +116,25 @@ def create_df(epss_cves, nist_cves) -> pd.DataFrame:
     return df
 
 
-def print_top_n(df, epss_cves, nist_cves, n):
+def print_top_n(df, epss_cves, nist_cves, n, entries_per_page=5):
     top_ids = df.sort_values(by="epss_score", ascending=False).head(n).id.to_list()
 
     print(f"Top {n} CVEs:")
 
-    for cve_id in top_ids:
+    for i, cve_id in enumerate(top_ids):
         nist_details = next(cve for cve in nist_cves if cve["id"] == cve_id)
         epss_details = next(cve for cve in epss_cves if cve["cve"] == cve_id)
 
         # construct cve.org url
         cve_url = f"https://www.cve.org/CVERecord?id={nist_details['id']}"
 
+        print(f"Top {i+1}. ", end="")
         print(colored(f"{nist_details['id']}", "red", attrs=["bold"]), end="")
         try:
             print(
                 colored(f": {nist_details['cisaVulnerabilityName']}", attrs=["bold"]),
                 end="",
-            )  # TODO: highlight text in red or something
+            )
         except KeyError:
             pass
         print()
@@ -155,8 +156,12 @@ def print_top_n(df, epss_cves, nist_cves, n):
         )
         pprint(nist_details["descriptions"][0]["value"])
 
-        # pprint(cve)
         print()
+
+        if entries_per_page > 0 and i % entries_per_page == entries_per_page - 1 and i < n - 1:
+            user_resp = input("Press enter to continue... (q to quit)")
+            if user_resp == "q":
+                break
 
 
 def create_plots(df):
@@ -228,10 +233,17 @@ def create_plots(df):
 
 
 @click.command()
-@click.option("--n", default=5, help="Print top n CVEs")
+@click.option("--n", default=30, help="Print top n CVEs")
 @click.option("--plot/--no-plot", default=False, help="Create plots")
-@click.option("--force-reload/--no-force-reload", default=False, help="Force re-download of CVEs")
-def main(n=5, plot=False, force_reload=False):
+@click.option(
+    "--force-reload/--no-force-reload", default=False, help="Force re-download of CVEs"
+)
+@click.option(
+    "--entries-per-page",
+    default=5,
+    help="Number of entries per page (set to 0 to disable pagination)",
+)
+def main(n=30, plot=False, force_reload=False, entries_per_page=5):
     epss_cves, nist_cves = get_cves(force_reload)
     df = create_df(epss_cves, nist_cves)
 

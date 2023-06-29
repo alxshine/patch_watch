@@ -10,5 +10,5 @@ Features:
 - [x] Plot min/mean/median/max impact score over days
 - [x] Allow specifying desired output via command line parameters
 - [x] Update cached data if from yesterday or older, allow force updating
-- [ ] Add pagination (depending on terminal size?)
+- [x] Add pagination (depending on terminal size?)
 - [ ] Add setup script
