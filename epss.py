@@ -1,6 +1,7 @@
 import datetime
 import json
 from pprint import pprint
+import os
 
 import pandas as pd
 import plotille
@@ -17,10 +18,16 @@ end_date = today
 
 
 # get cves rated above the 80th percentile in the last 30 days
-def get_cves() -> tuple[list[dict], list[dict]]:
+def get_cves(force_reload=False) -> tuple[list[dict], list[dict]]:
     EPSS_PATH = ".cache/epss.json"
     try:
+        # check if file is older than 1 day
+        epss_time = os.path.getmtime(EPSS_PATH)
+        if epss_time < datetime.datetime.now().timestamp() - 86400 or force_reload:
+            raise FileNotFoundError
+
         epss_cves = json.load(open(EPSS_PATH, "r"))
+
         print("Got EPSS data from cache")  # TODO: check if from today
     except FileNotFoundError:
         print("Requesting EPSS data...")
@@ -37,6 +44,10 @@ def get_cves() -> tuple[list[dict], list[dict]]:
     NIST_PATH = ".cache/nist.json"
 
     try:
+        nist_time = os.path.getmtime(NIST_PATH)
+        if nist_time < datetime.datetime.now().timestamp() - 86400 or force_reload:
+            raise FileNotFoundError
+
         nist_cves = json.load(open(NIST_PATH, "r"))  # TODO: check if from today
         print("Got NIST data from cache")
     except FileNotFoundError:
@@ -219,8 +230,9 @@ def create_plots(df):
 @click.command()
 @click.option("--n", default=5, help="Print top n CVEs")
 @click.option("--plot/--no-plot", default=False, help="Create plots")
-def main(n=5, plot=False):
-    epss_cves, nist_cves = get_cves()
+@click.option("--force-reload/--no-force-reload", default=False, help="Force re-download of CVEs")
+def main(n=5, plot=False, force_reload=False):
+    epss_cves, nist_cves = get_cves(force_reload)
     df = create_df(epss_cves, nist_cves)
 
     print_top_n(df, epss_cves, nist_cves, n)

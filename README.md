@@ -9,5 +9,6 @@ Features:
 - [x] Plot number of new CVEs per day
 - [x] Plot min/mean/median/max impact score over days
 - [x] Allow specifying desired output via command line parameters
-- [ ] Update cached data if from yesterday or older, allow force updating
+- [x] Update cached data if from yesterday or older, allow force updating
+- [ ] Add pagination (depending on terminal size?)
 - [ ] Add setup script
