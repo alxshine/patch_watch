@@ -12,3 +12,4 @@ Features:
 - [x] Update cached data if from yesterday or older, allow force updating
 - [x] Add pagination (depending on terminal size?)
 - [x] Add setup script
+- [ ] Create PyPI package?
